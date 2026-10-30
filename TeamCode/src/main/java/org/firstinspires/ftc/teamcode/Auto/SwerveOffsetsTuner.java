@@ -1,11 +1,9 @@
 
-package org.firstinspires.ftc.teamcode.pedro;
+package org.firstinspires.ftc.teamcode.Auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.pedropathing.follower.Follower;
-
-import java.util.Map;
 
 @TeleOp(name = "Swerve Offsets Tuner", group = "Pedro Pathing")
 public class SwerveOffsetsTuner extends OpMode {
