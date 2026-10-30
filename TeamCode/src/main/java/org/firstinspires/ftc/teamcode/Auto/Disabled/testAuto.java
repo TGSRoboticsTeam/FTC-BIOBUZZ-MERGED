@@ -1,5 +1,5 @@
 
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.Auto.Disabled;
 
 import com.pedropathing.api.PoseFactory;
 import com.pedropathing.follower.Follower;

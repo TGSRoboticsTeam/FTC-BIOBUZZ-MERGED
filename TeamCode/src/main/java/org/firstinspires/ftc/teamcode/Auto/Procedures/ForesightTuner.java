@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Auto.procedures;
+package org.firstinspires.ftc.teamcode.Auto.Procedures;
 
 import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.drivetrain.Drivetrain;

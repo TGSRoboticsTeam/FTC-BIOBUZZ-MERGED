@@ -1,13 +1,13 @@
-package org.firstinspires.ftc.teamcode.Auto;
+package org.firstinspires.ftc.teamcode.Auto.Important;
 
 import com.pedropathing.algorithm.Foresight;
 import com.pedropathing.revhub.localizers.PinpointLocalizer;
 import com.pedropathing.tuning.autotune.Procedure;
 import com.pedropathing.tuning.autotune.Tuner;
 
-import org.firstinspires.ftc.teamcode.Auto.procedures.ForesightTuner;
-import org.firstinspires.ftc.teamcode.Auto.procedures.PinpointTuner;
-import org.firstinspires.ftc.teamcode.Auto.procedures.Tests;
+import org.firstinspires.ftc.teamcode.Auto.Procedures.ForesightTuner;
+import org.firstinspires.ftc.teamcode.Auto.Procedures.PinpointTuner;
+import org.firstinspires.ftc.teamcode.Auto.Procedures.Tests;
 
 public class Tuning {
     @Tuner
