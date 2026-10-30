@@ -1,5 +1,5 @@
 
-package org.firstinspires.ftc.teamcode.Auto.Disabled;
+package org.firstinspires.ftc.teamcode.Auto;
 
 import com.pedropathing.api.PoseFactory;
 import com.pedropathing.follower.Follower;
@@ -16,7 +16,7 @@ import static com.pedropathing.api.Paths.line;
 import org.firstinspires.ftc.teamcode.Auto.Important.Constants;
 
 @Autonomous(name = "Swerve Test Auto", group = "Pedro Pathing")
-@Disabled
+//@Disabled
 public class testAuto extends OpMode {
 
     private Follower follower;

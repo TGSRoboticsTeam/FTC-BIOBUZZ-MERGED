@@ -27,12 +27,12 @@ dependencies {
     // pedropathing
     implementation 'com.pedropathing:ftc:2.0.1'
     implementation 'com.pedropathing:telemetry:0.0.6'
-    implementation "com.bylazar:panels:1.0.3"
+//    implementation "com.bylazar:panels:1.0.3"
     implementation("com.pedropathing:core:2.0.5")
 
     // pedropathing tuning
-    implementation 'com.bylazar:fullpanels:1.0.6'
-    implementation "com.bylazar:telemetry:1.0.3"
+//    implementation 'com.bylazar:fullpanels:1.0.6'
+//    implementation "com.bylazar:telemetry:1.0.3"
 
     implementation 'com.pedropathing:revhub:3.0.1'
     implementation 'com.pedropathing:tuning:1.0.1'
