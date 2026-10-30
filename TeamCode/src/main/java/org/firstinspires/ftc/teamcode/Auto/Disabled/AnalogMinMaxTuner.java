@@ -1,12 +1,14 @@
 
 package org.firstinspires.ftc.teamcode.Auto;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 
 @TeleOp(name = "Analog Min Max Tuner", group = "Pedro Pathing")
+@Disabled
 public class AnalogMinMaxTuner extends OpMode {
 
     private final String[] servoNames = {

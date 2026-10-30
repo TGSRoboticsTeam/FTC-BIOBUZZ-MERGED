@@ -1,13 +1,17 @@
 
 package org.firstinspires.ftc.teamcode.Auto;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import com.pedropathing.follower.Follower;
 
+import org.firstinspires.ftc.teamcode.Auto.Important.Constants;
+
 @TeleOp(name = "Swerve Turn Controller Tuner", group = "Tuning")
+@Disabled
 public class SwerveTurnControllerTuner extends LinearOpMode {
 
     @Override

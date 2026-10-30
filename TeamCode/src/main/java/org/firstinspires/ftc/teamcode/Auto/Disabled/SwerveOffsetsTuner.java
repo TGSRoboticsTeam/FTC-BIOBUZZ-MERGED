@@ -1,11 +1,15 @@
 
 package org.firstinspires.ftc.teamcode.Auto;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.pedropathing.follower.Follower;
 
+import org.firstinspires.ftc.teamcode.Auto.Important.Constants;
+
 @TeleOp(name = "Swerve Offsets Tuner", group = "Pedro Pathing")
+@Disabled
 public class SwerveOffsetsTuner extends OpMode {
 
     private Follower follower;
