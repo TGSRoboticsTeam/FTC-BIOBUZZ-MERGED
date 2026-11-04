@@ -221,7 +221,7 @@ public class HexDrive extends LinearOpMode {
             }
             wasTurretTriggerPressed = toggleTurret;
 
-            aimingFlap.setPosition(0.0);
+            aimingFlap.setPosition(0.6);
 
             telemetry.addData("ENCODERS", "");
             telemetry.addData("Front Left:", wrapAngle(getRawAngle(frontLeftEncoder)));
