@@ -208,7 +208,7 @@ public class HexDrive extends LinearOpMode {
                 launching = !launching;
             }
             if (launching) {
-                double launchPower = normalizeVoltage(batteryVoltage, 11.3, 1.05);
+                double launchPower = normalizeVoltage(batteryVoltage, 11.2, 1.05);
                 launcher1.setPower(launchPower);
                 launcher2.setPower(launchPower);
             } else {
