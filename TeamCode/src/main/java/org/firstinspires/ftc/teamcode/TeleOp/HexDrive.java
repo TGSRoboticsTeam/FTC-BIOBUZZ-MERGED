@@ -69,6 +69,10 @@ public class HexDrive extends LinearOpMode {
 
     private boolean lockWheels = false;
 
+    // Normalize motors
+    final double MAX_VOLTAGE = 14.5;
+
+
     private boolean launching = false;
     private boolean wasLauncherTriggerPressed = false;
     private boolean turretDefaultPosition = true;
@@ -89,6 +93,8 @@ public class HexDrive extends LinearOpMode {
 
 
         while (opModeIsActive()) {
+
+            double batteryVoltage = (voltageSensor != null) ? voltageSensor.getVoltage() : Double.NaN;
 
             // --- Toggle Logic for Calibration Mode (Gamepad 1) ---
             boolean rightStickButtonCurrentlyPressed = gamepad1.right_stick_button;
@@ -183,16 +189,17 @@ public class HexDrive extends LinearOpMode {
 
             if (gamepad1.left_trigger > 0.5) {
                 blocker.setPosition(0.5); // Open
+                intake1.setPower(0.55);
+                intake2.setPower(0.55);
             } else {
                 blocker.setPosition(0.35); // Closed
+                intake1.setPower(0.0);
+                intake2.setPower(0.0);
             }
 
             if (gamepad1.right_trigger > 0.5) {
                 intake1.setPower(1.0);
                 intake2.setPower(1.0);
-            } else {
-                intake1.setPower(0.0);
-                intake2.setPower(0.0);
             }
 
 
@@ -201,8 +208,9 @@ public class HexDrive extends LinearOpMode {
                 launching = !launching;
             }
             if (launching) {
-                launcher1.setPower(1.0);
-                launcher2.setPower(1.0);
+                double launchPower = normalizeVoltage(batteryVoltage, 11.3, 1.05);
+                launcher1.setPower(launchPower);
+                launcher2.setPower(launchPower);
             } else {
                 launcher1.setPower(0.0);
                 launcher2.setPower(0.0);
@@ -215,13 +223,16 @@ public class HexDrive extends LinearOpMode {
                 turretDefaultPosition = !turretDefaultPosition;
             }
             if (turretDefaultPosition) {
-                turret.setPosition(0.3);
+                // Backward aiming
+                turret.setPosition(0.293);
+                aimingFlap.setPosition(0.595);
             } else {
-                turret.setPosition(0.9);
+                // Forward aiming
+                turret.setPosition(0.87);
+                aimingFlap.setPosition(0.605);
             }
             wasTurretTriggerPressed = toggleTurret;
 
-            aimingFlap.setPosition(0.6);
 
             telemetry.addData("ENCODERS", "");
             telemetry.addData("Front Left:", wrapAngle(getRawAngle(frontLeftEncoder)));
@@ -357,5 +368,12 @@ public class HexDrive extends LinearOpMode {
         telemetry.addData("BR Raw Angle", getRawAngle(backRightEncoder));
         telemetry.addData("Exit", "Press Right Stick Button (R3) to EXIT.");
         telemetry.update();
+    }
+
+    private double normalizeVoltage(double batteryVoltage, double targetVoltage, double slopeGain) {
+        double output = Math.min(Math.max(targetVoltage * (MAX_VOLTAGE / batteryVoltage) * slopeGain, 0.0), 1.0);
+        telemetry.addData("Power Feathering", output);
+        telemetry.addData("Feathered Voltage", batteryVoltage * output);
+        return output;
     }
 }
