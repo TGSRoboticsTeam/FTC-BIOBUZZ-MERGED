@@ -281,11 +281,11 @@ public class HexDrive extends LinearOpMode {
 
         launcher1   = hardwareMap.get(DcMotor.class, "launcher1"); // Expansion Motor Port 2
         launcher2  = hardwareMap.get(DcMotor.class, "launcher2"); // Expansion Motor Port 3
-        blocker = hardwareMap.get(Servo.class, "blocker"); // Expansion Servo Port ?
+        blocker = hardwareMap.get(Servo.class, "blocker"); // Expansion Servo Port 3
 
         turret = hardwareMap.get(Servo.class, "turret"); // Expansion Servo Port 5
 
-        aimingFlap = hardwareMap.get(Servo.class, "aimingFlap"); // Expansion Servo Port ?
+        aimingFlap = hardwareMap.get(Servo.class, "aimingFlap"); // Expansion Servo Port 0
 
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();

@@ -7,7 +7,6 @@ import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -15,9 +14,9 @@ import static com.pedropathing.api.Paths.line;
 
 import org.firstinspires.ftc.teamcode.Auto.Important.Constants;
 
-@Autonomous(name = "Swerve Test Auto", group = "Pedro Pathing")
+@Autonomous(name = "TestAuto", group = "Autonomous")
 //@Disabled
-public class testAuto extends OpMode {
+public class TestAuto extends OpMode {
 
     private Follower follower;
 

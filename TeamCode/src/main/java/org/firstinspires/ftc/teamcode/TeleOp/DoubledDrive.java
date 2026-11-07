@@ -212,8 +212,10 @@ public class DoubledDrive extends LinearOpMode {
             if (toggleLauncher && !wasLauncherTriggerPressed) {
                 launching = !launching;
             }
+            double launchPower = normalizeVoltage(batteryVoltage, launcherFeathering, 1.05);
+            telemetry.addData("Power Feathering", launchPower);
+            telemetry.addData("Feathered Voltage", batteryVoltage * launchPower);
             if (launching) {
-                double launchPower = normalizeVoltage(batteryVoltage, launcherFeathering, 1.05);
                 launcher1.setPower(launchPower);
                 launcher2.setPower(launchPower);
             } else {
@@ -387,9 +389,6 @@ public class DoubledDrive extends LinearOpMode {
     }
 
     private double normalizeVoltage(double batteryVoltage, double targetVoltage, double slopeGain) {
-        double output = Math.min(Math.max(targetVoltage * (MAX_VOLTAGE / batteryVoltage) * slopeGain, 0.0), 1.0);
-        telemetry.addData("Power Feathering", output);
-        telemetry.addData("Feathered Voltage", batteryVoltage * output);
-        return output;
+        return Math.min(Math.max(targetVoltage * (MAX_VOLTAGE / batteryVoltage) * slopeGain, 0.0), 1.0);
     }
 }
