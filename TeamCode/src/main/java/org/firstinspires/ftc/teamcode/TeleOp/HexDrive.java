@@ -208,7 +208,7 @@ public class HexDrive extends LinearOpMode {
                 launching = !launching;
             }
             if (launching) {
-                double launchPower = normalizeVoltage(batteryVoltage, 11.2, 1.05);
+                double launchPower = normalizeVoltage(batteryVoltage, 11.0, 1.05);
                 launcher1.setPower(launchPower);
                 launcher2.setPower(launchPower);
             } else {
@@ -225,11 +225,11 @@ public class HexDrive extends LinearOpMode {
             if (turretDefaultPosition) {
                 // Backward aiming
                 turret.setPosition(0.293);
-                aimingFlap.setPosition(0.595);
+                aimingFlap.setPosition(0.575);
             } else {
                 // Forward aiming
                 turret.setPosition(0.87);
-                aimingFlap.setPosition(0.605);
+                aimingFlap.setPosition(0.585);
             }
             wasTurretTriggerPressed = toggleTurret;
 

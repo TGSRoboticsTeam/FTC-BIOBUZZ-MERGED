@@ -1,7 +1,10 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
-import com.pedropathing.api.Paths;
+import static com.pedropathing.ivy.Scheduler.schedule;
+import static com.pedropathing.ivy.groups.Groups.sequential;
+import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 
+import com.pedropathing.api.Paths;
 import com.pedropathing.api.PoseFactory;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
@@ -13,6 +16,7 @@ import static com.pedropathing.ivy.groups.Groups.sequential;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.Auto.Important.Constants;
 
@@ -27,7 +31,15 @@ public class SecondTip extends LinearOpMode {
     private final Pose path1 = poseFactory.of(80.2741, 33.4344, 90);
     private final Pose point2 = poseFactory.of(132.2047, 32.9908, 90);
 
-    // Autonomous routine
+    // Launcher motor declarations
+    private DcMotor launcher1;
+    private DcMotor launcher2;
+
+    private DcMotor intake1;
+
+    private DcMotor intake2;
+
+    // Autonomous routine (moves after shooting completes)
     public Command autoRoutine() {
         return sequential(
                 follow(follower, path1()),
@@ -42,7 +54,33 @@ public class SecondTip extends LinearOpMode {
         follower.setPose(start);
         follower.update();
 
+        // Hardware Map for the two launcher motors
+        launcher1 = hardwareMap.get(DcMotor.class, "launcher1");
+        launcher2 = hardwareMap.get(DcMotor.class, "launcher2");
+        intake1 = hardwareMap.get(DcMotor.class, "intake1");
+        intake2 = hardwareMap.get(DcMotor.class, "intake2");
+
+
         waitForStart();
+
+        // 1. Turn on motors
+        // 2. Wait to shoot (2000 ms = 2 seconds)
+        sleep(10000);
+
+        launcher1.setPower(0.93);
+        launcher2.setPower(0.93);
+        intake1.setPower(0.4);
+        intake2.setPower(0.4);
+
+
+        // 2. Wait to shoot (2000 ms = 2 seconds)
+        sleep(4000);
+
+        // 3. Turn off motors
+        launcher1.setPower(0.0);
+        launcher2.setPower(0.0);
+
+        // 4. Start movement
         schedule(autoRoutine());
 
         while (opModeIsActive()) {
@@ -60,6 +98,10 @@ public class SecondTip extends LinearOpMode {
 
             telemetry.update();
         }
+
+        // Failsafe: ensure motors are off if OpMode stops early
+        launcher1.setPower(0.0);
+        launcher2.setPower(0.0);
     }
 
     public Path path1() {
