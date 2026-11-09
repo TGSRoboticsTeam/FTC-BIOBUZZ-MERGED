@@ -1,14 +1,11 @@
 package org.firstinspires.ftc.teamcode.TeleOp;
 
-import com.pedropathing.revhub.localizers.PinpointConfig;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -16,8 +13,9 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.Memory;
 
 @TeleOp(name = "HiveDrive", group = "Swerve")
 //@Disabled
@@ -67,7 +65,12 @@ public class HiveDrive extends LinearOpMode {
     private boolean wasLauncherTriggerPressed = false;
     private boolean turretDefaultPosition = true;
     private boolean wasTurretTriggerPressed = false;
-    private int aimingFlapPosition = 0;
+
+    // Poses
+    private final Pose2D gardenCornerPosition = new Pose2D(DistanceUnit.INCH, 8, 8, AngleUnit.RADIANS, 90);
+    final double CLOSE_HIVE_Y = 54.8;
+    final double FAR_HIVE_Y = 91.8;
+    final double HIVE_X = 57.8;
 
     @Override
     public void runOpMode() {
@@ -76,9 +79,9 @@ public class HiveDrive extends LinearOpMode {
 
         waitForStart();
 
-        imu.resetYaw();
+        //imu.resetYaw();
+        pinpoint.setPosition(Memory.storedPosition);
 
-        // No headingOffset is needed for Robot-Centric drive
         double targetAngleFL = 0, targetAngleFR = 0, targetAngleBL = 0, targetAngleBR = 0;
 
 
@@ -92,26 +95,36 @@ public class HiveDrive extends LinearOpMode {
             }
 
 
-            // ------ IMU RESETTING ----- //
-            if (gamepad1.dpad_up) {
+            // FIELD-CENTRIC RESETTING
+            if (gamepad1.dpad_up) { // Reset heading
                 imu.resetYaw();
                 pinpoint.setHeading(0.0, AngleUnit.RADIANS);
+            }
+
+            if (gamepad1.dpad_down) { // Reset location
+                pinpoint.setPosX(gardenCornerPosition.getX(DistanceUnit.INCH), DistanceUnit.INCH);
+                pinpoint.setPosY(gardenCornerPosition.getY(DistanceUnit.INCH), DistanceUnit.INCH);
             }
 
             if (gamepad1.x) {
                 lockWheels = true;
             }
 
+            // PINPOINT
+            Pose2D pinpointPosition = pinpoint.getPosition();
+            double pinpointPositionX = pinpointPosition.getX(DistanceUnit.INCH);
+            double pinpointPositionY = pinpointPosition.getY(DistanceUnit.INCH);
+            double pinpointHeading = pinpointPosition.getHeading(AngleUnit.RADIANS);
+
             // SWERVE-DRIVE CODE
             // Raw inputs
             double rawY = -gamepad1.left_stick_y * speedMultiplier; // Forward/Backward
             double rawX = gamepad1.left_stick_x * speedMultiplier;  // Strafe Left/Right
-            double rot = gamepad1.right_stick_x * speedMultiplier;     // Rotation
+            double rot = gamepad1.right_stick_x * speedMultiplier;  // Rotation
 
             // Field-centric inputs
-            double botHeading = pinpoint.getHeading(AngleUnit.RADIANS);
-            double robotX = rawX * Math.cos(botHeading) + rawY * Math.sin(botHeading);
-            double robotY = -rawX * Math.sin(botHeading) + rawY * Math.cos(botHeading);
+            double robotX = rawX * Math.cos(pinpointHeading) + rawY * Math.sin(pinpointHeading);
+            double robotY = -rawX * Math.sin(pinpointHeading) + rawY * Math.cos(pinpointHeading);
 
             // Swerve math
             double A = robotX - rot * (WHEELBASE / R);
@@ -155,39 +168,17 @@ public class HiveDrive extends LinearOpMode {
             runModule(backLeftDrive, backLeftSteer, backLeftEncoder, BACK_LEFT_OFFSET, speedBackLeft, targetAngleBL);
             runModule(backRightDrive, backRightSteer, backRightEncoder, BACK_RIGHT_OFFSET, speedBackRight, targetAngleBR);
 
-            // ACCESSORIES
-            if (gamepad1.left_trigger > 0.5) {
-                blocker.setPosition(0.5); // Open
-                intake1.setPower(0.55);
-                intake2.setPower(0.55);
-            } else {
-                blocker.setPosition(0.35); // Closed
-                intake1.setPower(0.0);
-                intake2.setPower(0.0);
-            }
-            if (gamepad1.right_trigger > 0.5) {
-                intake1.setPower(1.0); // Fast intake
-                intake2.setPower(1.0);
-            }
+            // TURRET
+            double hiveY = Math.min(Math.max(
+                    CLOSE_HIVE_Y,
+                    pinpointPositionY),
+                    FAR_HIVE_Y
+            );
+            turret.setPosition(
+                    getAngleToPosition(pinpointPositionX, pinpointPositionY, HIVE_X, hiveY)
+            );
 
-
-            boolean toggleLauncher = gamepad1.left_bumper;
-            if (toggleLauncher && !wasLauncherTriggerPressed) {
-                launching = !launching;
-            }
-            double launchPower = normalizeVoltage(batteryVoltage, 10.2, 1.0); // 11.0, 1.1
-            telemetry.addData("Power Feathering", launchPower);
-            telemetry.addData("Feathered Voltage", batteryVoltage * launchPower);
-            if (launching) {
-                launcher1.setPower(launchPower);
-                launcher2.setPower(launchPower);
-            } else {
-                launcher1.setPower(0.0);
-                launcher2.setPower(0.0);
-            }
-            wasLauncherTriggerPressed = toggleLauncher;
-
-
+            /*
             boolean toggleTurret = gamepad1.a;
             if (toggleTurret && !wasTurretTriggerPressed) {
                 turretDefaultPosition = !turretDefaultPosition;
@@ -202,7 +193,39 @@ public class HiveDrive extends LinearOpMode {
                 aimingFlap.setPosition(0.585);
             }
             wasTurretTriggerPressed = toggleTurret;
+            //*/
 
+            // INTAKE AND BLOCKER
+            if (gamepad1.left_trigger > 0.5) {
+                blocker.setPosition(0.5); // Open
+                intake1.setPower(0.55);
+                intake2.setPower(0.55);
+            } else {
+                blocker.setPosition(0.35); // Closed
+                intake1.setPower(0.0);
+                intake2.setPower(0.0);
+            }
+            if (gamepad1.right_trigger > 0.5) {
+                intake1.setPower(1.0); // Fast intake
+                intake2.setPower(1.0);
+            }
+
+            // LAUNCHER
+            boolean toggleLauncher = gamepad1.left_bumper;
+            if (toggleLauncher && !wasLauncherTriggerPressed) {
+                launching = !launching;
+            }
+            double launchPower = normalizeVoltage(batteryVoltage, 11.0, 1.1);
+            telemetry.addData("Power Feathering", launchPower);
+            telemetry.addData("Feathered Voltage", batteryVoltage * launchPower);
+            if (launching) {
+                launcher1.setPower(launchPower);
+                launcher2.setPower(launchPower);
+            } else {
+                launcher1.setPower(0.0);
+                launcher2.setPower(0.0);
+            }
+            wasLauncherTriggerPressed = toggleLauncher;
 
             // TELEMETRY
             telemetry.addData("Battery Voltage:", voltageSensor.getVoltage());
@@ -272,7 +295,6 @@ public class HiveDrive extends LinearOpMode {
     }
 
     private void runModule(DcMotor driveMotor, CRServo steerServo, AnalogInput encoder, double encoderOffset, double speed, double targetAngle) {
-        // Swerve module control logic (unchanged)
         double rawAngle = getRawAngle(encoder);
         double currentAngle = rawAngle - encoderOffset;
         currentAngle = wrapAngle(currentAngle);
@@ -285,7 +307,7 @@ public class HiveDrive extends LinearOpMode {
         }
 
         double servoPower = STEER_KP * delta;
-        servoPower *= -1; // Important! Invert servo power
+        servoPower *= -1; // IMPORTANT Invert servo power
 
         if (Math.abs(servoPower) < STEER_DEADBAND) servoPower = 0;
 
@@ -313,5 +335,13 @@ public class HiveDrive extends LinearOpMode {
 
     private double normalizeVoltage(double batteryVoltage, double targetVoltage, double slopeGain) {
         return Math.min(Math.max(targetVoltage * (MAX_BATTERY_VOLTAGE / batteryVoltage) * slopeGain, 0.0), 1.0);
+    }
+
+    private double getAngleToPosition(double robotX, double robotY, double targetX, double targetY) {
+        double forwardAngle = 0.87;
+        double backwardAngle = 0.293;
+
+        double angle = Math.atan2(targetY - robotY, targetX - robotX);
+        return forwardAngle - (angle / (2.0 * Math.PI)) * (forwardAngle - backwardAngle);
     }
 }

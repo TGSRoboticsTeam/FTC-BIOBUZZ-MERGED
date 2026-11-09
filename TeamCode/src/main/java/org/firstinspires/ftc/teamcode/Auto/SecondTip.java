@@ -18,7 +18,11 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Auto.Important.Constants;
+import org.firstinspires.ftc.teamcode.Memory;
 
 @Autonomous(name = "SecondTip", group = "Autonomous")
 public class SecondTip extends LinearOpMode {
@@ -98,6 +102,16 @@ public class SecondTip extends LinearOpMode {
 
             telemetry.update();
         }
+
+        // Save position at the end of auto
+        Pose endPose = follower.pose();
+        Memory.storedPosition = new Pose2D(
+                DistanceUnit.INCH,
+                endPose.x(),
+                endPose.y(),
+                AngleUnit.RADIANS,
+                endPose.heading()
+        );
 
         // Failsafe: ensure motors are off if OpMode stops early
         launcher1.setPower(0.0);
