@@ -5,5 +5,5 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 public class Memory {
-    public static Pose2D storedPosition = new Pose2D(DistanceUnit.INCH, 0.0, 0.0, AngleUnit.RADIANS, 90);
+    public static Pose2D storedPosition = new Pose2D(DistanceUnit.INCH, 141.5 - 6.47, 141.5 - 6.5, AngleUnit.RADIANS, 180);
 }
