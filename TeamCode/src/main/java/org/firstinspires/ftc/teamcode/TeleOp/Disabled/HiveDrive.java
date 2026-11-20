@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.TeleOp;
+package org.firstinspires.ftc.teamcode.TeleOp.Disabled;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -6,7 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorControllerEx;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -19,14 +21,16 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.Memory;
 
 @TeleOp(name = "HiveDrive", group = "Swerve")
-//@Disabled
+@Disabled
 public class HiveDrive extends LinearOpMode {
 
     private DcMotor frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive;
     private CRServo frontLeftSteer, frontRightSteer, backLeftSteer, backRightSteer;
     private AnalogInput frontLeftEncoder, frontRightEncoder, backLeftEncoder, backRightEncoder;
     private DcMotor intake1, intake2;
-    private DcMotor launcher1, launcher2;
+    private DcMotorEx launcher1, launcher2;
+    private AnalogInput launcherEncoder;
+    private PIDFCoefficients launcherPID;
     private Servo blocker;
     private CRServo turret;
     private AnalogInput turretEncoder;
@@ -42,38 +46,38 @@ public class HiveDrive extends LinearOpMode {
     final double WHEELBASE   = 13.544;
     final double R = Math.hypot(TRACK_WIDTH, WHEELBASE);
 
-
     final double FRONT_LEFT_OFFSET  = 0.05;
     final double FRONT_RIGHT_OFFSET = 1.39;
     final double BACK_LEFT_OFFSET   = 3.16;
     final double BACK_RIGHT_OFFSET  = 0.82;
 
 
-    final double STEER_KP = 0.6;
+    final double STEER_SPEED = 0.6;
     final double DRIVE_DEADBAND = 0.05;
     final double STEER_DEADBAND = 0.05;
 
-    final double FIELD_CENTRIC_HEADING_OFFSET = Math.PI;
+    private boolean lockWheels = false;
+    double fieldCentricOffset = 0.0; // Set at the start of TeleOp.
 
     // SPEED CONTROL
     final double MAX_SPEED_DEFAULT = 0.8;
     final double MAX_SPEED_SLOW_MODE = 0.2;
 
-    private boolean lockWheels = false;
-
     // Normalize motors
     final double MAX_BATTERY_VOLTAGE = 14.5;
     private boolean launching = false;
     private boolean wasLauncherTriggerPressed = false;
+    private int MAX_FLYWHEEL_VELOCITY = 2600;
 
     // TURRET
-    final double TURRET_KP = 0.8;
+    final double TURRET_SPEED = 0.8;
 
     // Poses (Using positions from the blue side of the field when viewed though the Pedro Pathing Visualizer website)
     private final Pose2D gardenCornerPosition = new Pose2D(DistanceUnit.INCH, 141.5 - 6.47, 141.5 - 6.5, AngleUnit.DEGREES, 180.0);
     final double FIRST_HIVE_Y = 85.8;
     final double SECOND_HIVE_Y = 55.8;
     final double HIVE_X = 84.1;
+
 
     @Override
     public void runOpMode() {
@@ -83,34 +87,32 @@ public class HiveDrive extends LinearOpMode {
         waitForStart();
 
         //imu.resetYaw();
+        pinpoint.setHeading(Memory.storedPosition.getHeading(AngleUnit.RADIANS), AngleUnit.RADIANS);
         pinpoint.setPosition(Memory.storedPosition);
+        fieldCentricOffset = pinpoint.getHeading(AngleUnit.RADIANS);
 
         double targetAngleFL = 0, targetAngleFR = 0, targetAngleBL = 0, targetAngleBR = 0;
 
 
         while (opModeIsActive()) {
 
+            // MISC
             double batteryVoltage = (voltageSensor != null) ? voltageSensor.getVoltage() : Double.NaN;
 
-            double speedMultiplier = MAX_SPEED_DEFAULT;
-            if (gamepad1.right_bumper) {
-                speedMultiplier = MAX_SPEED_SLOW_MODE;
+            if (gamepad1.x) {
+                lockWheels = true;
             }
-
 
             // FIELD-CENTRIC RESETTING
             if (gamepad1.dpad_up) { // Reset heading
                 imu.resetYaw();
                 pinpoint.setHeading(180.0, AngleUnit.DEGREES);
+                fieldCentricOffset = pinpoint.getHeading(AngleUnit.RADIANS);
             }
 
             if (gamepad1.dpad_down) { // Reset location
                 pinpoint.setPosX(gardenCornerPosition.getX(DistanceUnit.INCH), DistanceUnit.INCH);
                 pinpoint.setPosY(gardenCornerPosition.getY(DistanceUnit.INCH), DistanceUnit.INCH);
-            }
-
-            if (gamepad1.x) {
-                lockWheels = true;
             }
 
             // PINPOINT
@@ -119,9 +121,19 @@ public class HiveDrive extends LinearOpMode {
             double pinpointPositionX = pinpointPosition.getX(DistanceUnit.INCH);
             double pinpointPositionY = pinpointPosition.getY(DistanceUnit.INCH);
             double pinpointHeading = pinpointPosition.getHeading(AngleUnit.RADIANS);
-            double heading = pinpointHeading + FIELD_CENTRIC_HEADING_OFFSET;
+
+            if (gamepad1.dpad_left) { // Soft reset heading
+                fieldCentricOffset = pinpoint.getHeading(AngleUnit.RADIANS);
+            }
+
+            double heading = pinpointHeading - fieldCentricOffset;
 
             // SWERVE-DRIVE CODE
+            // Slow speed
+            double speedMultiplier = MAX_SPEED_DEFAULT;
+            if (gamepad1.right_bumper) {
+                speedMultiplier = MAX_SPEED_SLOW_MODE;
+            }
             // Raw inputs
             double rawY = -gamepad1.left_stick_y * speedMultiplier; // Forward/Backward
             double rawX = gamepad1.left_stick_x * speedMultiplier;  // Strafe Left/Right
@@ -180,8 +192,10 @@ public class HiveDrive extends LinearOpMode {
                     FIRST_HIVE_Y
             );
             double radiansToHive = Math.atan2(hiveY - pinpointPositionY, HIVE_X - pinpointPositionX);
-            double testTargetAngle = pinpointHeading - radiansToHive;
-            runTurret(turret, turretEncoder, 0.0, testTargetAngle);
+            double targetAngle = heading - radiansToHive;
+            runTurret(turret, turretEncoder, 3.289, targetAngle); // !!!! IMPORTANT: POSSIBLY MAKE NEGATIVE? !!!!
+
+            double distanceToHive = Math.sqrt(Math.pow(pinpointPositionX - HIVE_X, 2) + Math.pow(pinpointPositionY - hiveY, 2));
 
             /*
             boolean toggleTurret = gamepad1.a;
@@ -199,7 +213,7 @@ public class HiveDrive extends LinearOpMode {
             }
             wasTurretTriggerPressed = toggleTurret;
             //*/
-            aimingFlap.setPosition(0.5);
+            aimingFlap.setPosition(0.56);
 
             // INTAKE AND BLOCKER
             if (gamepad1.left_trigger > 0.5) {
@@ -234,9 +248,17 @@ public class HiveDrive extends LinearOpMode {
             wasLauncherTriggerPressed = toggleLauncher;
 
             // TELEMETRY
+            telemetry.addData("--- PINPOINT ---", "");
             telemetry.addData("Pinpoint X:", pinpointPositionX);
             telemetry.addData("Pinpoint Y:", pinpointPositionY);
+            telemetry.addData("Pinpoint Heading Raw:", heading);
             telemetry.addData("Pinpoint Heading Degrees:", toDegrees(heading));
+            telemetry.addData("", "");
+            telemetry.addData("--- HIVE ---", "");
+            telemetry.addData("Hive Y:", hiveY);
+            telemetry.addData("Distance To Hive:", distanceToHive);
+            telemetry.addData("", "");
+            telemetry.addData("--- ROBOT ---", "");
             telemetry.addData("Battery Voltage:", voltageSensor.getVoltage());
             telemetry.update();
         }
@@ -259,8 +281,9 @@ public class HiveDrive extends LinearOpMode {
 
         intake1  = hardwareMap.get(DcMotor.class, "intake1"); // Expansion Motor Port 2
         intake2 = hardwareMap.get(DcMotor.class, "intake2"); // Expansion Motor Port 3
-        launcher1   = hardwareMap.get(DcMotor.class, "launcher1"); // Expansion Motor Port 0
-        launcher2  = hardwareMap.get(DcMotor.class, "launcher2"); // Expansion Motor Port 1
+        launcher1 = hardwareMap.get(DcMotorEx.class, "launcher1"); // Expansion Motor Port 0
+        launcher2 = hardwareMap.get(DcMotorEx.class, "launcher2"); // Expansion Motor Port 1
+        launcherEncoder = hardwareMap.get(AnalogInput.class, "launcherEncoder"); // Expansion Analog Input Devices Port ?
         turret = hardwareMap.get(CRServo.class, "turret"); // Expansion Servo Port 5
         turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder"); // Expansion Analog Input Devices Port 0
         blocker = hardwareMap.get(Servo.class, "blocker"); // Expansion Servo Port 3
@@ -301,6 +324,20 @@ public class HiveDrive extends LinearOpMode {
         resetMotors(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
     }
 
+    private void initializePID() {
+        DcMotorControllerEx motorControllerEx = (DcMotorControllerEx)launcher1.getController();
+        int motorIndex = ((DcMotorEx)launcher1).getPortNumber();
+
+        launcherPID = launcher1.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        double KF = 32767.0 / MAX_FLYWHEEL_VELOCITY;
+        double KP = KF * 0.1;
+        double KI = KP * 0.1;
+        double KD = 0.0;
+        PIDFCoefficients pidfNew = new PIDFCoefficients(KP, KI, KD, KF);
+        launcher1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfNew);
+    }
+
     private void runModule(DcMotor driveMotor, CRServo steerServo, AnalogInput encoder, double encoderOffset, double speed, double targetAngle) {
         double rawAngle = getRawAngle(encoder);
         double currentAngle = rawAngle - encoderOffset;
@@ -313,7 +350,7 @@ public class HiveDrive extends LinearOpMode {
             speed *= -1;
         }
 
-        double servoPower = STEER_KP * delta;
+        double servoPower = STEER_SPEED * delta;
         servoPower *= -1; // IMPORTANT Invert servo power
 
         if (Math.abs(servoPower) < STEER_DEADBAND) servoPower = 0;
@@ -331,7 +368,7 @@ public class HiveDrive extends LinearOpMode {
 
         double delta = wrapAngle(targetAngle - currentAngle);
 
-        double servoPower = -TURRET_KP * delta;
+        double servoPower = -TURRET_SPEED * delta;
 
         if (Math.abs(servoPower) < STEER_DEADBAND) servoPower = 0;
 

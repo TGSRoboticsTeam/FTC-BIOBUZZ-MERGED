@@ -113,6 +113,12 @@ public class SecondTip extends LinearOpMode {
                 endPose.heading()
         );
 
+        telemetry.addData("Saved X Position:", Memory.storedPosition.getX(DistanceUnit.INCH));
+        telemetry.addData("Saved Y Position:", Memory.storedPosition.getY(DistanceUnit.INCH));
+        telemetry.addData("Saved Heading:", Memory.storedPosition.getHeading(AngleUnit.RADIANS));
+        telemetry.addData("Saved Heading Degrees:", Memory.storedPosition.getHeading(AngleUnit.DEGREES));
+        telemetry.update();
+
         // Failsafe: ensure motors are off if OpMode stops early
         launcher1.setPower(0.0);
         launcher2.setPower(0.0);

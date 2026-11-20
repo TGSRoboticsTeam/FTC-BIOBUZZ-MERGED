@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 
-@TeleOp(name = "Analog Min Max Tuner", group = "Pedro Pathing")
+@TeleOp(name = "Analog Min Max Tuner", group = "Tools")
 //@Disabled
 public class AnalogMinMaxTuner extends OpMode {
 
